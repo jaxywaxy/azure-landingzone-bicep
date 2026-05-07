@@ -1,0 +1,21 @@
+cat > .gitignore << 'EOF'
+# Bicep Build Output
+*.json
+!parameters.json
+!*.bicepparam
+
+# Azure CLI
+.azure/
+
+# IDE
+.vscode/
+*.code-workspace
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+EOF

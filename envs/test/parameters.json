@@ -1,0 +1,28 @@
+# envs/test/parameters.json
+cat > envs/test/parameters.json << 'EOF'
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "value": "jacquitest"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "tags": {
+      "value": {
+        "environment": "test",
+        "owner": "jacqui",
+        "project": "landingzone",
+        "costcenter": "engineering",
+        "businessunit": "cloud",
+        "createdby": "bicep",
+        "managedby": "bicep",
+        "service": "platform",
+        "workload": "test-workloads"
+      }
+    }
+  }
+}
+EOF

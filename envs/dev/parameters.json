@@ -1,0 +1,28 @@
+# envs/dev/parameters.json
+cat > envs/dev/parameters.json << 'EOF'
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "value": "jacquidev"
+    },
+    "location": {
+      "value": "australiaeast"
+    },
+    "tags": {
+      "value": {
+        "environment": "dev",
+        "owner": "jacqui",
+        "project": "landingzone",
+        "costcenter": "engineering",
+        "businessunit": "cloud",
+        "createdby": "bicep",
+        "managedby": "bicep",
+        "service": "platform",
+        "workload": "dev-workloads"
+      }
+    }
+  }
+}
+EOF
