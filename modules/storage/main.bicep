@@ -10,7 +10,15 @@ param tags object = {}
 ])
 param storagePurpose string = 'general'
 
-var storageAccountName = toLower('${replace(prefix, '-', '')}st${storagePurpose}${uniqueString(resourceGroup().id)}')
+// Storage account names are 3-24 chars, lowercase alphanumeric, globally unique.
+// Layout: <prefix-no-hyphens><st><purposeCode><6-char-hash>
+//   prefix       max 11 (per param decorator)
+//   'st'         2 chars (convention marker)
+//   purposeCode  1 char  ('g' general, 'l' logging)
+//   hash         6 chars (uniqueString truncated; sufficient collision resistance per RG)
+// Max total: 11 + 2 + 1 + 6 = 20 chars. Well inside the 24-char ceiling.
+var purposeCode = storagePurpose == 'logging' ? 'l' : 'g'
+var storageAccountName = toLower('${replace(prefix, '-', '')}st${purposeCode}${take(uniqueString(resourceGroup().id), 6)}')
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
