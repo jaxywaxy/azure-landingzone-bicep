@@ -1,5 +1,3 @@
-# .github/workflows/dev.yml
-cat > .github/workflows/dev.yml << 'EOFYML'
 name: Deploy Dev
 
 on:
@@ -26,18 +24,12 @@ jobs:
     environment:
       name: dev
 
-    env:
-      ARM_USE_OIDC: true
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Azure Login (OIDC)
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -46,22 +38,27 @@ jobs:
       - name: Show Azure identity
         run: az account show
 
-      - name: Bicep Build & Validate
-        run: |
-          cd envs/dev
-          az bicep build --file main.bicep
+      - name: Bicep Build
+        run: az bicep build --file envs/dev/main.bicep
 
-      - name: Deploy Bicep (What-If)
+      - name: Bicep Validate (cloud-side)
+        run: |
+          az deployment sub validate \
+            --name "bicep-validate-dev-$(date +%s)" \
+            --location australiaeast \
+            --template-file envs/dev/main.bicep \
+            --parameters envs/dev/parameters.json
+
+      - name: Bicep What-If
         id: whatif
         run: |
-          cd envs/dev
-          az deployment sub create \
-            --name "bicep-deploy-dev-$(date +%s)" \
+          az deployment sub what-if \
+            --name "bicep-whatif-dev-$(date +%s)" \
             --location australiaeast \
-            --template-file main.bicep \
-            --parameters parameters.json \
-            --what-if \
-            --what-if-result-format "FullResourcePayloads" > whatif-output.json 2>&1 || true
+            --template-file envs/dev/main.bicep \
+            --parameters envs/dev/parameters.json \
+            --result-format ResourceIdOnly \
+            --no-pretty-print > envs/dev/whatif-output.txt
 
       - name: Comment What-If on PR
         if: github.event_name == 'pull_request'
@@ -69,54 +66,41 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const whatifOutput = fs.readFileSync('envs/dev/whatif-output.json', 'utf8');
-
-            const body = `
-            ### 🧪 Bicep What-If (Dev)
-
-            <details><summary>Click to expand</summary>
-
-            \`\`\`json
-            ${whatifOutput}
-            \`\`\`
-
-            </details>
-            `;
+            let whatif = fs.readFileSync('envs/dev/whatif-output.txt', 'utf8');
+            const limit = 60000;
+            if (whatif.length > limit) {
+              whatif = whatif.slice(0, limit) + '\n\n[truncated — see job logs for full output]';
+            }
+            const marker = '<!-- bicep-whatif-dev -->';
+            const body = `${marker}\n### Bicep What-If (Dev)\n\n<details><summary>Show diff</summary>\n\n\`\`\`\n${whatif}\n\`\`\`\n\n</details>`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' &&
-              c.body.includes('Bicep What-If (Dev)')
-            );
-
-            if (botComment) {
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: body
+                comment_id: existing.id,
+                body,
               });
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: body
+                body,
               });
             }
 
-      - name: Deploy Bicep
-        if: github.event_name == 'push'
+      - name: Bicep Deploy
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          cd envs/dev
           az deployment sub create \
             --name "bicep-deploy-dev-$(date +%s)" \
             --location australiaeast \
-            --template-file main.bicep \
-            --parameters parameters.json
-EOFYML
+            --template-file envs/dev/main.bicep \
+            --parameters envs/dev/parameters.json
