@@ -1,8 +1,7 @@
-# modules/networking/main.bicep
-cat > modules/networking/main.bicep << 'EOF'
+@minLength(3)
+@maxLength(11)
 param prefix string
 param location string
-param resourceGroupName string
 param tags object = {}
 
 // Hub Virtual Network
@@ -98,4 +97,3 @@ output hubVnetId string = hubVnet.id
 output hubVnetName string = hubVnet.name
 output appsVnetId string = appsVnet.id
 output appsVnetName string = appsVnet.name
-EOF

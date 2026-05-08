@@ -1,12 +1,16 @@
-# modules/storage/main.bicep
-cat > modules/storage/main.bicep << 'EOF'
+@minLength(3)
+@maxLength(11)
 param prefix string
 param location string
-param resourceGroupName string
 param tags object = {}
-param storagePurpose string = 'general' // 'general' or 'logging'
 
-var storageAccountName = '${replace(prefix, '-', '')}st${storagePurpose}'
+@allowed([
+  'general'
+  'logging'
+])
+param storagePurpose string = 'general'
+
+var storageAccountName = toLower('${replace(prefix, '-', '')}st${storagePurpose}${uniqueString(resourceGroup().id)}')
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
@@ -32,4 +36,3 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 output storageId string = storageAccount.id
 output storageName string = storageAccount.name
 output primaryBlobEndpoint string = storageAccount.properties.primaryEndpoints.blob
-EOF

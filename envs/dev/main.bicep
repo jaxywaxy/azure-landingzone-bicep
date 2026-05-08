@@ -1,11 +1,21 @@
-# envs/dev/main.bicep
-cat > envs/dev/main.bicep << 'EOF'
+targetScope = 'subscription'
+
+@minLength(3)
+@maxLength(11)
 param prefix string
 param location string
 param tags object
 
+// RG names computed here so module `scope:` expressions are calculable
+// at the start of deployment (BCP120 — outputs from other modules can't
+// be used in scope assignments).
+var platformRgName = '${prefix}-rg-platform'
+var networkingRgName = '${prefix}-rg-networking'
+var appsRgName = '${prefix}-rg-apps'
+var loggingRgName = '${prefix}-rg-logging'
+
 // Module: Resource Groups
-module resourceGroups 'modules/resource-groups/main.bicep' = {
+module resourceGroups '../../modules/resource-groups/main.bicep' = {
   name: 'resourceGroups-${uniqueString(subscription().id)}'
   scope: subscription()
   params: {
@@ -16,37 +26,43 @@ module resourceGroups 'modules/resource-groups/main.bicep' = {
 }
 
 // Module: Networking
-module networking 'modules/networking/main.bicep' = {
+module networking '../../modules/networking/main.bicep' = {
   name: 'networking-${uniqueString(subscription().id)}'
-  scope: resourceGroup(resourceGroups.outputs.networkingRgName)
+  scope: resourceGroup(networkingRgName)
+  dependsOn: [
+    resourceGroups
+  ]
   params: {
     prefix: prefix
     location: location
-    resourceGroupName: resourceGroups.outputs.networkingRgName
     tags: tags
   }
 }
 
 // Module: Logging
-module logging 'modules/logging/main.bicep' = {
+module logging '../../modules/logging/main.bicep' = {
   name: 'logging-${uniqueString(subscription().id)}'
-  scope: resourceGroup(resourceGroups.outputs.loggingRgName)
+  scope: resourceGroup(loggingRgName)
+  dependsOn: [
+    resourceGroups
+  ]
   params: {
     prefix: prefix
     location: location
-    resourceGroupName: resourceGroups.outputs.loggingRgName
     tags: tags
   }
 }
 
 // Module: Storage Account - Logging
-module storageLogs 'modules/storage/main.bicep' = {
+module storageLogs '../../modules/storage/main.bicep' = {
   name: 'storage-logs-${uniqueString(subscription().id)}'
-  scope: resourceGroup(resourceGroups.outputs.loggingRgName)
+  scope: resourceGroup(loggingRgName)
+  dependsOn: [
+    resourceGroups
+  ]
   params: {
     prefix: prefix
     location: location
-    resourceGroupName: resourceGroups.outputs.loggingRgName
     tags: tags
     storagePurpose: 'logging'
   }
@@ -54,10 +70,10 @@ module storageLogs 'modules/storage/main.bicep' = {
 
 // Outputs
 output resourceGroupsOutput object = {
-  platform: resourceGroups.outputs.platformRgName
-  networking: resourceGroups.outputs.networkingRgName
-  apps: resourceGroups.outputs.appsRgName
-  logging: resourceGroups.outputs.loggingRgName
+  platform: platformRgName
+  networking: networkingRgName
+  apps: appsRgName
+  logging: loggingRgName
 }
 
 output networkingOutput object = {
@@ -68,4 +84,3 @@ output networkingOutput object = {
 output loggingOutput object = {
   lawId: logging.outputs.lawId
 }
-EOF

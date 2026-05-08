@@ -1,5 +1,7 @@
-# modules/resource-groups/main.bicep
-cat > modules/resource-groups/main.bicep << 'EOF'
+targetScope = 'subscription'
+
+@minLength(3)
+@maxLength(11)
 param prefix string
 param location string
 param tags object = {}
@@ -32,7 +34,7 @@ resource loggingRg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// Outputs
+// Outputs (kept for downstream consumers; parent template now derives names directly from prefix)
 output platformRgName string = platformRg.name
 output platformRgId string = platformRg.id
 output networkingRgName string = networkingRg.name
@@ -41,4 +43,3 @@ output appsRgName string = appsRg.name
 output appsRgId string = appsRg.id
 output loggingRgName string = loggingRg.name
 output loggingRgId string = loggingRg.id
-EOF
