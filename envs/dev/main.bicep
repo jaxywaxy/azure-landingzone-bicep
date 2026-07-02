@@ -25,7 +25,7 @@ module resourceGroups '../../modules/resource-groups/main.bicep' = {
   }
 }
 
-// Module: Networking
+// Module: Networking (platform-owned fabric)
 module networking '../../modules/networking/main.bicep' = {
   name: 'networking-${uniqueString(subscription().id)}'
   scope: resourceGroup(networkingRgName)
@@ -68,6 +68,36 @@ module storageLogs '../../modules/storage/main.bicep' = {
   }
 }
 
+// Module: Apps (workload-owned - App Service, Key Vault, Cosmos, private endpoints)
+module apps '../../modules/apps/main.bicep' = {
+  name: 'apps-${uniqueString(subscription().id)}'
+  scope: resourceGroup(appsRgName)
+  dependsOn: [
+    resourceGroups
+  ]
+  params: {
+    prefix: prefix
+    location: location
+    tags: tags
+    privateEndpointSubnetId: networking.outputs.peSubnetId
+  }
+}
+
+// Module: Storage Account - Apps (workload general-purpose)
+module storageApps '../../modules/storage/main.bicep' = {
+  name: 'storage-apps-${uniqueString(subscription().id)}'
+  scope: resourceGroup(appsRgName)
+  dependsOn: [
+    resourceGroups
+  ]
+  params: {
+    prefix: prefix
+    location: location
+    tags: tags
+    storagePurpose: 'general'
+  }
+}
+
 // Outputs
 output resourceGroupsOutput object = {
   platform: platformRgName
@@ -83,4 +113,10 @@ output networkingOutput object = {
 
 output loggingOutput object = {
   lawId: logging.outputs.lawId
+}
+
+output appsOutput object = {
+  webApp: apps.outputs.webAppName
+  keyVault: apps.outputs.keyVaultName
+  cosmos: apps.outputs.cosmosName
 }

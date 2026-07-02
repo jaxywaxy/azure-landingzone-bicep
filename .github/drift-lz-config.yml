@@ -1,0 +1,40 @@
+# Drift detection config for this landing zone (scanned by bicep-drift-agent).
+#
+# This is a subscription-scoped CAF landing zone: one template per env fans out
+# to platform / networking / apps / logging resource groups. Each check sets
+# `subscription_scoped: true` and uses an RG glob so the agent scans the whole
+# LZ instance in a single pass (not per-RG), then routes drift by owner.
+
+name: landingzone
+subscription_id: "bd48a22c-91b9-46e6-a2ff-15893e348d83"
+
+# Owner-routed notifications: platform-owned drift (VNets, subnets, NSGs, route
+# tables, NAT gateway, public IPs) goes to the platform team; workload-owned
+# drift (App Service, Key Vault, Cosmos, storage, private endpoints) to the app
+# team. Webhook URLs are placeholders - set them to enable delivery.
+notifications:
+  platform-team:
+    slack: ""      # set to the platform team's Slack webhook
+    owners: [platform]
+    filter: all
+  app-team:
+    slack: ""      # set to the app team's Slack webhook
+    owners: [workload]
+    filter: all
+
+checks:
+  - name: Landing Zone dev
+    repo: jaxywaxy/azure-landingzone-bicep
+    branch: main
+    path: envs/dev/main.bicep
+    subscription_scoped: true
+    resource_groups:
+      - "jacquidev-*"     # the dev LZ instance (all 4 RGs)
+
+  - name: Landing Zone test
+    repo: jaxywaxy/azure-landingzone-bicep
+    branch: main
+    path: envs/test/main.bicep
+    subscription_scoped: true
+    resource_groups:
+      - "jacquitest-*"    # the test LZ instance
