@@ -15,36 +15,10 @@ param privateEndpointSubnetId string
 
 var suffix = take(uniqueString(resourceGroup().id), 6)
 
-// App Service Plan (Linux, B1)
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: '${prefix}-asp'
-  location: location
-  tags: tags
-  sku: {
-    name: 'B1'
-    tier: 'Basic'
-  }
-  kind: 'linux'
-  properties: {
-    reserved: true
-  }
-}
-
-// Web App
-resource webApp 'Microsoft.Web/sites@2023-12-01' = {
-  name: '${prefix}-app-${suffix}'
-  location: location
-  tags: tags
-  properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      linuxFxVersion: 'NODE|20-lts'
-      minTlsVersion: '1.2'
-      ftpsState: 'Disabled'
-    }
-  }
-}
+// NOTE: App Service (plan + web app) was intentionally omitted - App Service Plan
+// creation is throttled at the subscription level in this test subscription. The
+// workload owner class is still well represented by Key Vault, Cosmos, storage,
+// and the private endpoints below.
 
 // Key Vault
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -169,6 +143,5 @@ resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-04-01' =
 }
 
 // Outputs
-output webAppName string = webApp.name
 output keyVaultName string = keyVault.name
 output cosmosName string = cosmos.name
