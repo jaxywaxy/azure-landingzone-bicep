@@ -116,7 +116,6 @@ output loggingOutput object = {
 }
 
 output appsOutput object = {
-  webApp: apps.outputs.webAppName
   keyVault: apps.outputs.keyVaultName
   cosmos: apps.outputs.cosmosName
 }
