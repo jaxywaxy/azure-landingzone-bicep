@@ -1,0 +1,16 @@
+# .drift-ignore for this landing zone.
+#
+# This is a PLATFORM + workload landing zone: the platform team owns the network
+# fabric here, so we deliberately do NOT ignore VNets / subnets / NSGs / route
+# tables / NAT gateways - their drift SHOULD surface and route to the platform
+# team. (Contrast with a pure workload LZ, which ignores referenced platform
+# fabric.) The agent's baseline .drift-ignore already filters universal Azure
+# noise (networkWatchers, auto-created NICs, etc.), so this file is intentionally
+# minimal.
+
+ignore:
+  # NSG default rules are platform defaults, not drift. (Explicit securityRules
+  # we define are still compared and route to the app team.)
+  - resource_type: "Microsoft.Network/networkSecurityGroups"
+    property: "properties.defaultSecurityRules"
+    reason: "Azure-managed default NSG rules, not user-defined drift"
