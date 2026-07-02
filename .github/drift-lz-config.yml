@@ -1,9 +1,11 @@
 # Drift detection config for this landing zone (scanned by bicep-drift-agent).
 #
-# This is a subscription-scoped CAF landing zone: one template per env fans out
-# to platform / networking / apps / logging resource groups. Each check sets
-# `subscription_scoped: true` and uses an RG glob so the agent scans the whole
-# LZ instance in a single pass (not per-RG), then routes drift by owner.
+# CAF-aligned: one subscription == one landing zone. This subscription-scoped
+# template fans out to platform / networking / apps / logging resource groups,
+# all part of the same LZ. The check sets `subscription_scoped: true` and scans
+# the whole subscription ("*") in a single pass, then routes drift by owner:
+# platform-owned spoke fabric to the platform team, workload resources to the
+# app team - even though they live in the same subscription.
 
 name: landingzone
 subscription_id: "bd48a22c-91b9-46e6-a2ff-15893e348d83"
@@ -23,18 +25,10 @@ notifications:
     filter: all
 
 checks:
-  - name: Landing Zone dev
+  - name: Workload Landing Zone
     repo: jaxywaxy/azure-landingzone-bicep
     branch: main
     path: envs/dev/main.bicep
     subscription_scoped: true
     resource_groups:
-      - "jacquidev-*"     # the dev LZ instance (all 4 RGs)
-
-  - name: Landing Zone test
-    repo: jaxywaxy/azure-landingzone-bicep
-    branch: main
-    path: envs/test/main.bicep
-    subscription_scoped: true
-    resource_groups:
-      - "jacquitest-*"    # the test LZ instance
+      - "*"     # the whole subscription = this landing zone (CAF: one sub per LZ)
