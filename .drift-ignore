@@ -15,16 +15,6 @@ ignore:
     property: "properties.defaultSecurityRules"
     reason: "Azure-managed default NSG rules, not user-defined drift"
 
-  # VNet peerings: not separate rows in Resource Graph (embedded in the vnet's
-  # properties), so bicep-declared peerings can't be reconciled as children -
-  # and hub-side peerings from spoke vending live in the HUB subscription,
-  # outside a spoke scan's live scope. Ignore MISSING only; property/extra
-  # drift on peerings still surfaces. Follow-up: expand peering children from
-  # vnet properties in get_live_state (like cosmos children).
-  - resource_type: "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
-    drift_type: "missing_in_azure"
-    reason: "Peering children not indexed separately; cross-sub hub-side peering out of scan scope"
-
   # Hub->spoke peerings are created by the spoke vending template (envs/spoke-*),
   # not the hub template, so the hub scan sees them as extra. They ARE IaC-managed.
   - resource_type: "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
