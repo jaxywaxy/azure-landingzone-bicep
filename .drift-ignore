@@ -24,3 +24,10 @@ ignore:
   - resource_type: "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
     drift_type: "missing_in_azure"
     reason: "Peering children not indexed separately; cross-sub hub-side peering out of scan scope"
+
+  # Hub->spoke peerings are created by the spoke vending template (envs/spoke-*),
+  # not the hub template, so the hub scan sees them as extra. They ARE IaC-managed.
+  - resource_type: "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
+    resource_name: "*hub-to-spoke-*"
+    drift_type: "extra_in_azure"
+    reason: "Created by the spoke vending template; IaC-managed, not drift"
