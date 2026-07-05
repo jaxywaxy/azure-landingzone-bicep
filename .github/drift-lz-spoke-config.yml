@@ -1,0 +1,25 @@
+# Drift config: spoke connectivity vended into the drift-test WORKLOAD subscription.
+#
+# CAF enterprise model: the platform team owns the spoke network fabric (VNet,
+# subnets, peering) even though it lives in the workload's subscription. This
+# config scans ONLY the platform-vended spoke RG there; the workload's own scan
+# (drift-test-resources) ignores network fabric via its .drift-ignore, so the
+# two scans partition the subscription cleanly by owner.
+
+name: spoke-drifttest
+subscription_id: "594e0bd0-2a8d-4419-b281-87869c20fd03"   # workload sub
+
+notifications:
+  platform-team:
+    slack: ""            # platform team's webhook - everything here is platform-owned
+    owners: [platform]
+    filter: all
+
+checks:
+  - name: Spoke Connectivity (drift-test)
+    repo: jaxywaxy/azure-landingzone-bicep
+    branch: main
+    path: envs/spoke-drifttest/main.bicep
+    subscription_scoped: true
+    resource_groups:
+      - "rg-spoke-drifttest"    # only the vended spoke RG, not the workload's resources
