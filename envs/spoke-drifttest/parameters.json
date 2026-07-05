@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "australiaeast"
+    },
+    "hubSubscriptionId": {
+      "value": "bd48a22c-91b9-46e6-a2ff-15893e348d83"
+    },
+    "hubNetworkingRg": {
+      "value": "jacquidev-rg-networking"
+    },
+    "hubVnetName": {
+      "value": "jacquidev-vnet-hub"
+    }
+  }
+}
