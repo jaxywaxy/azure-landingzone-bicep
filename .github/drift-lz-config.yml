@@ -13,14 +13,15 @@ subscription_id: "bd48a22c-91b9-46e6-a2ff-15893e348d83"
 # Owner-routed notifications: platform-owned drift (VNets, subnets, NSGs, route
 # tables, NAT gateway, public IPs) goes to the platform team; workload-owned
 # drift (App Service, Key Vault, Cosmos, storage, private endpoints) to the app
-# team. Webhook URLs are placeholders - set them to enable delivery.
+# team. Webhook URLs are ${DRIFT_WEBHOOK_*} secret references, expanded by the
+# agent at send time from secrets in the drift-agent repo (never plaintext here).
 notifications:
   platform-team:
-    slack: ""      # set to the platform team's Slack webhook
+    slack: "${DRIFT_WEBHOOK_PLATFORM}"
     owners: [platform]
     filter: all
   app-team:
-    slack: ""      # set to the app team's Slack webhook
+    slack: "${DRIFT_WEBHOOK_WORKLOAD}"
     owners: [workload]
     filter: all
 

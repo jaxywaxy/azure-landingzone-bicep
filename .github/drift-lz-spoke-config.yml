@@ -11,7 +11,7 @@ subscription_id: "594e0bd0-2a8d-4419-b281-87869c20fd03"   # workload sub
 
 notifications:
   platform-team:
-    slack: ""            # platform team's webhook - everything here is platform-owned
+    slack: "${DRIFT_WEBHOOK_PLATFORM}"   # everything here is platform-owned
     owners: [platform]
     filter: all
 
