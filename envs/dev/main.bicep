@@ -25,6 +25,20 @@ module resourceGroups '../../modules/resource-groups/main.bicep' = {
   }
 }
 
+// Module: Platform (platform-owned shared tooling)
+module platform '../../modules/platform/main.bicep' = {
+  name: 'platform-${uniqueString(subscription().id)}'
+  scope: resourceGroup(platformRgName)
+  dependsOn: [
+    resourceGroups
+  ]
+  params: {
+    prefix: prefix
+    location: location
+    tags: tags
+  }
+}
+
 // Module: Networking (platform-owned fabric)
 module networking '../../modules/networking/main.bicep' = {
   name: 'networking-${uniqueString(subscription().id)}'
@@ -118,4 +132,9 @@ output loggingOutput object = {
 output appsOutput object = {
   keyVault: apps.outputs.keyVaultName
   cosmos: apps.outputs.cosmosName
+}
+
+output platformOutput object = {
+  identity: platform.outputs.platformIdentityId
+  keyVault: platform.outputs.platformKeyVaultName
 }
