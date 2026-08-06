@@ -21,3 +21,31 @@ ignore:
     resource_name: "*hub-to-spoke-*"
     drift_type: "extra_in_azure"
     reason: "Created by the spoke vending template; IaC-managed, not drift"
+
+  # Standing subscription-scope Contributor held by the automation service
+  # principals. These are the estate's baseline access, not drift: they predate
+  # the scan and surfaced on EVERY sub-scoped run, which is how the analysis came
+  # to recommend rotating the pipeline's own credentials.
+  #
+  # Scoped to the exact ROLE + PRINCIPAL, and to extra_in_azure only, on purpose:
+  #   - the same SP escalated to a DIFFERENT role (Owner, User Access
+  #     Administrator) is a different drift name and still surfaces;
+  #   - missing_in_azure is untouched, so REVOKING one of these is still drift;
+  #   - no other principal is affected.
+  # A blanket `resource_type` rule would swallow every out-of-band grant the RBAC
+  # comparator exists to catch - see the note in the agent's baseline .drift-ignore.
+  #
+  # NOT ignored, deliberately: the subscription Owner and the custom role held by
+  # user 70afebf7. Those stay visible until someone verifies them.
+  - resource_type: "Microsoft.Authorization/roleAssignments"
+    resource_name: "Contributor -> ServicePrincipal:ef83bff1-c6c1-4cb1-84be-9bd758e8fc41"
+    drift_type: "extra_in_azure"
+    reason: "github-oidc-terraform - the pipeline deployer's own standing grant"
+
+  # UNIDENTIFIED at the time of writing (2026-08-07): accepted as expected
+  # baseline by the estate owner without the SP having been resolved. If nobody
+  # can name it, revisit - `az ad sp show --id 4c2cb1db-9eaf-4107-aedd-2a0a96e79577`.
+  - resource_type: "Microsoft.Authorization/roleAssignments"
+    resource_name: "Contributor -> ServicePrincipal:4c2cb1db-9eaf-4107-aedd-2a0a96e79577"
+    drift_type: "extra_in_azure"
+    reason: "Automation service principal; standing subscription Contributor, accepted 2026-08-07"
