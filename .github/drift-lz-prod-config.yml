@@ -1,0 +1,51 @@
+# Drift config: the PROD platform landing zone in sub-lz-bicep.
+#
+# This subscription is shared, so the scan is scoped to the `jacquiprod-*`
+# resource groups rather than "*". The same subscription also holds the
+# platform-vended spoke (drift-lz-spoke-config.yml, rg-spoke-drifttest), the
+# drift agent's own resources, and rg-app-dev/test/prod. Scanning "*" here would
+# report all of those as extra_in_azure on every run - drift that is real to the
+# comparison and noise to the reader, which is how a report stops being read.
+#
+# The dev landing zone lives in its OWN subscription and has its own config
+# (drift-lz-config.yml). Same template lineage, different estate - do not point
+# one at the other's subscription: envs/dev declares jacquidev-* names, so
+# against this estate every resource reads missing and every deployed one extra.
+
+name: landingzone-prod
+subscription_id: "594e0bd0-2a8d-4419-b281-87869c20fd03"   # sub-lz-bicep
+
+# Owner-routed, same split as the dev LZ: platform fabric to the platform team,
+# the apps module to the app team. Webhook URLs are ${DRIFT_WEBHOOK_*} secret
+# references expanded by the agent at send time, never plaintext here.
+notifications:
+  platform-team:
+    slack: "${DRIFT_WEBHOOK_PLATFORM}"
+    owners: [platform]
+    filter: all
+  app-team:
+    slack: "${DRIFT_WEBHOOK_WORKLOAD}"
+    owners: [workload]
+    filter: all
+
+checks:
+  - name: Platform Landing Zone (prod)
+    repo: jaxywaxy/azure-landingzone-bicep
+    branch: main
+    path: envs/prod/main.bicep
+    subscription_scoped: true
+    resource_groups:
+      - "jacquiprod-*"    # this LZ's four RGs; see the note above on "*"
+
+    # This subscription IS the platform landing zone. Without this the agent
+    # classifies by resource TYPE and calls everything outside the network
+    # fabric "workload", which sends the vaults, Cosmos, storage, workspace and
+    # even the resource groups to the app team. Verified against envs/prod as
+    # compiled: 26 platform / 2 workload, versus 5 / 16 without it.
+    ownership_model: platform
+
+    # ...except the modules that really are a workload. Keys are the Bicep
+    # module's symbolic name; anything unlisted falls back to ownership_model.
+    module_owners:
+      apps: workload
+      storage-apps: workload
