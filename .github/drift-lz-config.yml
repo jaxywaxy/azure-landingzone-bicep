@@ -33,3 +33,18 @@ checks:
     subscription_scoped: true
     resource_groups:
       - "*"     # the whole subscription = this landing zone (CAF: one sub per LZ)
+
+    # This subscription IS the platform landing zone - the platform team owns
+    # all of it. Without this the agent classifies by resource TYPE and calls
+    # everything outside the network fabric "workload", which sent the vaults,
+    # Cosmos, storage, workspace, managed identity, private endpoints and even
+    # the resource groups to the app team, and left the platform team with only
+    # the role assignments. Notifications route on owner, so that is the wrong
+    # team being paged for the platform team's own estate.
+    ownership_model: platform
+
+    # ...except the modules that really are a workload. Keys are the Bicep
+    # module's symbolic name; anything unlisted falls back to ownership_model.
+    module_owners:
+      apps: workload
+      storage-apps: workload
